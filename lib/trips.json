@@ -1,0 +1,26 @@
+[
+  {
+    "id": "4d96d95d-19ec-434b-847b-7faf37830f6c",
+    "pickup": "Brigade",
+    "destination": "Kabuga",
+    "city": "Kano",
+    "amount": 0.25,
+    "passengerId": "did:privy:cmo4c7evd00dl0cjihfbta5d9",
+    "passengerEmail": "",
+    "status": "accepted",
+    "createdAt": "2026-04-18T19:33:20.483Z",
+    "driverId": "did:privy:cmo4c7evd00dl0cjihfbta5d9"
+  },
+  {
+    "id": "3cc009ee-b493-4cf7-bf1d-226c6b6fcb99",
+    "pickup": "Brigade",
+    "destination": "Kabuga",
+    "city": "Kano",
+    "amount": 0.25,
+    "passengerId": "did:privy:cmo4c7evd00dl0cjihfbta5d9",
+    "passengerEmail": "",
+    "status": "accepted",
+    "createdAt": "2026-04-18T19:34:04.367Z",
+    "driverId": "did:privy:cmo4c7evd00dl0cjihfbta5d9"
+  }
+]
