@@ -2,8 +2,9 @@
   "services": {
     "web": {
       "path": ".",
-      "port": 8080,
-      "healthCheck": "/api/health"
+      "port": 3000,
+      "healthCheck": "/api/health",
+      "startCommand": "npm start"
     }
   }
 }
