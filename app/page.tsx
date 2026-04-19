@@ -13,18 +13,26 @@ const CITIES = [
 ];
 
 const STEPS = [
-  { n: "01", title: "Enter your route", desc: "Tell RideTrue where you are going. The AI agent looks up what people are actually paying for that route right now." },
-  { n: "02", title: "See the fair price", desc: "You get the real market rate before you agree to anything. No surprises, no negotiating from a position of ignorance." },
-  { n: "03", title: "Pay and get in", desc: "Pay with your bank account, card, or USDC. Your money goes into escrow and the driver knows it is confirmed and waiting." },
-  { n: "04", title: "Arrive and release", desc: "When you get there, you confirm arrival and the driver gets paid instantly. Simple, clean, done." },
+  { n: "01", title: "Enter your route", desc: "Tell RideTrue where you are going. The AI agent checks what people are actually paying for that route right now." },
+  { n: "02", title: "See the fair price", desc: "You get the real market rate before you agree to anything. No surprises, no negotiating blind." },
+  { n: "03", title: "Pay with USDC", desc: "Pay with USDC on Base. Your money goes into escrow and the driver knows payment is confirmed and waiting." },
+  { n: "04", title: "Arrive and release", desc: "When you get there, confirm arrival and the driver gets paid instantly. Simple, clean, done." },
 ];
 
 const TICKER_ROUTES = ["Lagos Island → VI", "Abuja CBD → Airport", "Kano → Sabon Gari", "PH GRA → Trans Amadi", "Ibadan Bodija → Dugbe", "Enugu GRA → New Haven"];
+
+const CARD_STEPS = [
+  { step: "Step 1 of 4", label: "Route entered" },
+  { step: "Step 2 of 4", label: "Fare confirmed" },
+  { step: "Step 3 of 4", label: "Payment in escrow" },
+  { step: "Step 4 of 4", label: "Trip complete" },
+];
 
 export default function Home() {
   const { login, authenticated, user, logout } = usePrivy();
   const router = useRouter();
   const [activeCity, setActiveCity] = useState(0);
+  const [cardStep, setCardStep] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,12 +41,39 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  function handleCTA() {
-    authenticated ? router.push("/dashboard") : login();
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCardStep(prev => (prev + 1) % CARD_STEPS.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function handleCTA() {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    const res = await fetch(`/api/me?userId=${user?.id}&role=passenger`);
+    const data = await res.json();
+    if (data.user) {
+      router.push("/dashboard");
+    } else {
+      router.push("/register");
+    }
   }
 
-  function handleDriverCTA() {
-    authenticated ? router.push("/driver/register") : login();
+  async function handleDriverCTA() {
+    if (!authenticated) {
+      login();
+      return;
+    }
+    const res = await fetch(`/api/me?userId=${user?.id}&role=driver`);
+    const data = await res.json();
+    if (data.user) {
+      router.push("/driver/dashboard");
+    } else {
+      router.push("/driver/register");
+    }
   }
 
   return (
@@ -65,6 +100,7 @@ export default function Home() {
         .ticker-wrap { display: flex; gap: 48px; animation: ticker 20s linear infinite; white-space: nowrap; }
         @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .fade-up { animation: fadeUp 0.6s ease forwards; }
         .hero-badge { background: #fffbeb; border: 1px solid #F5C000; color: #92400e; }
         .escrow-pill { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
@@ -95,7 +131,7 @@ export default function Home() {
           {authenticated ? (
             <>
               <span style={{ fontSize: 13, color: "#666" }}>{user?.email?.address}</span>
-              <button onClick={() => router.push("/dashboard")} className="btn-primary" style={{ padding: "8px 18px", fontSize: 13, borderRadius: 8 }}>Dashboard</button>
+              <button onClick={handleCTA} className="btn-primary" style={{ padding: "8px 18px", fontSize: 13, borderRadius: 8 }}>Dashboard</button>
               <button onClick={logout} className="btn-outline" style={{ padding: "8px 18px", fontSize: 13, borderRadius: 8 }}>Sign out</button>
             </>
           ) : (
@@ -114,30 +150,26 @@ export default function Home() {
           <div className="fade-up" style={{ marginBottom: 24 }}>
             <span className="hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 100, fontSize: 12, fontWeight: 600 }}>
               <span style={{ width: 6, height: 6, background: "#F5C000", borderRadius: "50%", display: "inline-block" }} />
-              Live in Nigeria · West Africa coming soon
+              Travel With Trust · Powered by Locus
             </span>
           </div>
           <h1 className="display fade-up" style={{ fontSize: "clamp(40px,7vw,84px)", fontWeight: 900, lineHeight: 1.0, letterSpacing: "-0.03em", marginBottom: 28, animationDelay: "0.1s", maxWidth: 820 }}>
             Fair fares.<br /><span style={{ color: "#F5C000" }}>Every ride.</span><br />Guaranteed.
           </h1>
           <p className="fade-up" style={{ fontSize: 18, color: "#555", lineHeight: 1.75, maxWidth: 520, marginBottom: 20, animationDelay: "0.2s" }}>
-            You tell RideTrue where you are going. An AI agent checks the real market rate for that route, and your payment is held until you arrive safely. The driver gets paid when you confirm arrival.
+            Enter your route. Our AI agent checks the real going rate. You pay in USDC — held in escrow until you arrive. The driver gets paid the moment you confirm. No overcharging. Ever.
           </p>
           <div className="fade-up" style={{ display: "flex", gap: 8, marginBottom: 36, flexWrap: "wrap", animationDelay: "0.25s" }}>
-            <span className="payment-tag">🏦 Bank transfer</span>
-            <span className="payment-tag">💳 Debit card</span>
             <span className="payment-tag">🔷 USDC on Base</span>
+            <span className="payment-tag">⚡ Instant escrow</span>
+            <span className="payment-tag">🤖 AI verified fare</span>
           </div>
           <div className="fade-up" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 64, animationDelay: "0.3s" }}>
-            <button onClick={handleCTA} className="btn-primary" style={{ padding: "14px 32px", fontSize: 15, borderRadius: 10 }}>
-              Book a ride →
-            </button>
-            <button onClick={handleDriverCTA} className="btn-dark" style={{ padding: "14px 32px", fontSize: 15, borderRadius: 10 }}>
-              Become a driver
-            </button>
+            <button onClick={handleCTA} className="btn-primary" style={{ padding: "14px 32px", fontSize: 15, borderRadius: 10 }}>Book a ride →</button>
+            <button onClick={handleDriverCTA} className="btn-dark" style={{ padding: "14px 32px", fontSize: 15, borderRadius: 10 }}>Become a driver</button>
           </div>
           <div className="fade-up stats-row" style={{ display: "flex", gap: 48, flexWrap: "wrap", animationDelay: "0.4s" }}>
-            {[{ value: "₦0", label: "Overcharge ever" }, { value: "100%", label: "Escrow protected" }, { value: "3 ways", label: "To pay" }].map(s => (
+            {[{ value: "₦0", label: "Overcharge ever" }, { value: "100%", label: "Escrow protected" }, { value: "USDC", label: "On Base blockchain" }].map(s => (
               <div key={s.label}>
                 <p className="display" style={{ fontSize: 28, fontWeight: 900, color: "#0a0a0a", lineHeight: 1 }}>{s.value}</p>
                 <p style={{ fontSize: 13, color: "#999", marginTop: 4, fontWeight: 500 }}>{s.label}</p>
@@ -145,32 +177,34 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* Animated floating card */}
         <div className="hide-mobile" style={{ position: "absolute", right: 80, top: "50%", transform: "translateY(-50%)", background: "#fff", border: "1px solid #f0f0f0", borderRadius: 20, padding: 24, width: 300, boxShadow: "0 24px 64px rgba(0,0,0,0.09)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
             <p className="mono" style={{ fontSize: 10, color: "#999", textTransform: "uppercase", letterSpacing: "0.1em" }}>Live trip</p>
-            <span className="escrow-pill" style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100 }}>Escrow active</span>
+            <span style={{ background: "#fffbeb", border: "1px solid #F5C000", color: "#92400e", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100 }}>Locus escrow</span>
           </div>
           <div style={{ marginBottom: 14 }}><p style={{ fontSize: 11, color: "#999", marginBottom: 3 }}>From</p><p style={{ fontSize: 14, fontWeight: 600 }}>Lagos Island, Lagos</p></div>
           <div style={{ marginBottom: 16 }}><p style={{ fontSize: 11, color: "#999", marginBottom: 3 }}>To</p><p style={{ fontSize: 14, fontWeight: 600 }}>Victoria Island, Lagos</p></div>
           <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: 14, marginBottom: 16 }}>
-            <p style={{ fontSize: 11, color: "#92400e", marginBottom: 4 }}>Fair market fare</p>
+            <p style={{ fontSize: 11, color: "#92400e", marginBottom: 4 }}>AI verified fare</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <p className="display" style={{ fontSize: 22, fontWeight: 900, color: "#0a0a0a" }}>₦1,200</p>
-              <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>≈ $0.85 USDC</span>
+              <p className="display" style={{ fontSize: 22, fontWeight: 900, color: "#0a0a0a" }}>$0.25</p>
+              <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>USDC on Base</span>
             </div>
           </div>
           <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 11, color: "#999", marginBottom: 8 }}>Payment method</p>
+            <p style={{ fontSize: 11, color: "#999", marginBottom: 8 }}>Payment</p>
             <div style={{ display: "flex", gap: 6 }}>
-              {["Bank", "Card", "USDC"].map((p, i) => (
-                <span key={p} style={{ flex: 1, textAlign: "center", padding: "6px 0", fontSize: 11, fontWeight: 600, background: i === 0 ? "#0a0a0a" : "#f5f5f5", color: i === 0 ? "#F5C000" : "#999", borderRadius: 6 }}>{p}</span>
-              ))}
+              <span style={{ flex: 1, textAlign: "center", padding: "6px 0", fontSize: 11, fontWeight: 600, background: "#0a0a0a", color: "#F5C000", borderRadius: 6 }}>USDC</span>
+              <span style={{ flex: 1, textAlign: "center", padding: "6px 0", fontSize: 11, fontWeight: 600, background: "#f5f5f5", color: "#999", borderRadius: 6 }}>Escrow</span>
+              <span style={{ flex: 1, textAlign: "center", padding: "6px 0", fontSize: 11, fontWeight: 600, background: "#f5f5f5", color: "#999", borderRadius: 6 }}>Base</span>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {[1, 2, 3, 4].map(i => (<div key={i} style={{ flex: 1, height: 5, background: i <= 2 ? "#F5C000" : "#f0f0f0", borderRadius: 3 }} />))}
+          <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+            {[1, 2, 3, 4].map(i => (<div key={i} style={{ flex: 1, height: 5, background: i <= cardStep + 1 ? "#F5C000" : "#f0f0f0", borderRadius: 3, transition: "background 0.4s" }} />))}
           </div>
-          <p style={{ fontSize: 11, color: "#999", marginTop: 6 }}>Step 2 of 4 — fare confirmed</p>
+          <p style={{ fontSize: 11, color: "#999" }}>{CARD_STEPS[cardStep].step} — {CARD_STEPS[cardStep].label}</p>
         </div>
       </section>
 
@@ -198,7 +232,7 @@ export default function Home() {
               <p style={{ fontSize: 13, color: "#F5C000", fontWeight: 600, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>How it works</p>
               <h2 className="display" style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em" }}>Four steps.<br />Every trip.</h2>
             </div>
-            <p style={{ fontSize: 16, color: "#666", lineHeight: 1.8 }}>Getting overcharged on transport in Nigeria is something most people have just accepted. RideTrue is built to change that. The AI agent knows what a fair fare looks like for your route and makes sure that is what you pay.</p>
+            <p style={{ fontSize: 16, color: "#666", lineHeight: 1.8 }}>Getting overcharged on transport in Nigeria is something most people have just accepted. RideTrue fixes that. The AI agent verifies the fair fare for your route, you pay in USDC, and nobody gets cheated.</p>
           </div>
           <div className="four-col" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
             {STEPS.map(step => (
@@ -219,7 +253,7 @@ export default function Home() {
             <div>
               <p style={{ fontSize: 13, color: "#F5C000", fontWeight: 600, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>Where we operate</p>
               <h2 className="display" style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", color: "#fff", marginBottom: 16 }}>Starting in<br /><span style={{ color: "#F5C000" }}>Nigeria.</span></h2>
-              <p style={{ fontSize: 15, color: "#888", lineHeight: 1.8, marginBottom: 20 }}>We are launching in six major Nigerian cities. Once that is running well, we are expanding to Ghana, Senegal, and the rest of West Africa in Q3 2026.</p>
+              <p style={{ fontSize: 15, color: "#888", lineHeight: 1.8, marginBottom: 20 }}>Launching in six major Nigerian cities. Once running, expanding to Ghana, Senegal, and the rest of West Africa in Q3 2026.</p>
               <div style={{ display: "flex", gap: 8, marginBottom: 32, flexWrap: "wrap" }}>
                 <span style={{ background: "#1a1a1a", color: "#F5C000", padding: "4px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600 }}>🇳🇬 Nigeria — Live</span>
                 <span style={{ background: "#111", color: "#555", padding: "4px 12px", borderRadius: 100, fontSize: 11, fontWeight: 600 }}>🇬🇭 Ghana — Coming soon</span>
@@ -247,9 +281,9 @@ export default function Home() {
           <h2 className="display" style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", marginBottom: 56 }}>Transport in Nigeria<br />has always had problems.<br />Here is how we fix them.</h2>
           <div className="three-col" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
             {[
-              { icon: "🚫", title: "You always know the price", desc: "Before you get in the car, RideTrue shows you what the fair rate is for that route. You decide if you want to proceed." },
-              { icon: "🔐", title: "Your money is safe", desc: "You pay before the trip starts but the driver only receives the money after you confirm you arrived. The escrow protects both of you." },
-              { icon: "📲", title: "Use whatever you have", desc: "Bank transfer, debit card, or USDC. You do not need a crypto wallet to use RideTrue. Pay the way that works for you." },
+              { icon: "🤖", title: "AI verified fares", desc: "Before you get in, RideTrue shows you the real going rate for your route. The AI agent checks current market prices so you never overpay." },
+              { icon: "🔐", title: "Your money is safe", desc: "You pay before the trip but the driver only receives the money after you confirm arrival. Escrow on Base blockchain protects both sides." },
+              { icon: "🔷", title: "USDC on Base", desc: "Pay with USDC — fast, cheap, and borderless. No bank drama, no currency issues. Just send and ride." },
             ].map(f => (
               <div key={f.title} style={{ background: "#fff", padding: 28, borderRadius: 16, border: "1px solid #fde68a" }}>
                 <p style={{ fontSize: 32, marginBottom: 16 }}>{f.icon}</p>
@@ -268,15 +302,15 @@ export default function Home() {
             <div>
               <p style={{ fontSize: 13, color: "rgba(0,0,0,0.4)", fontWeight: 600, marginBottom: 16, textTransform: "uppercase", letterSpacing: "0.1em" }}>For drivers</p>
               <h2 className="display" style={{ fontSize: "clamp(28px,4vw,48px)", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em", marginBottom: 20 }}>Pay $0.20.<br />Get an AI agent<br />that runs your trips.</h2>
-              <p style={{ fontSize: 16, color: "rgba(0,0,0,0.65)", lineHeight: 1.8, marginBottom: 16 }}>When you register as a driver, you pay $0.20 USDC to activate your AI agent. That agent handles everything — fare negotiation, payment confirmation, trip tracking. You just drive.</p>
-              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, marginBottom: 36 }}>When a passenger confirms they arrived, the money leaves escrow and lands in your wallet immediately. No chasing payments, no cash disputes, no waiting.</p>
+              <p style={{ fontSize: 16, color: "rgba(0,0,0,0.65)", lineHeight: 1.8, marginBottom: 16 }}>Register as a driver, pay $0.20 USDC once to activate your AI agent. The agent handles fare verification, payment confirmation, and trip tracking. You just drive.</p>
+              <p style={{ fontSize: 14, color: "rgba(0,0,0,0.5)", lineHeight: 1.7, marginBottom: 36 }}>When a passenger confirms arrival, the money leaves escrow and lands in your wallet immediately. No chasing payments, no cash disputes, no waiting.</p>
               <button onClick={handleDriverCTA} className="btn-dark" style={{ padding: "14px 32px", fontSize: 15, borderRadius: 10 }}>Register as a driver →</button>
             </div>
             <div style={{ background: "#0a0a0a", borderRadius: 20, padding: 32 }}>
               <p style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 20, fontWeight: 600 }}>Driver AI agent</p>
               {[
                 { label: "Agent activation", value: "$0.20 USDC" },
-                { label: "Fare negotiation", value: "Automatic" },
+                { label: "Fare verification", value: "AI powered" },
                 { label: "Payment collection", value: "Escrow secured" },
                 { label: "Trip confirmation", value: "AI handled" },
                 { label: "Payout speed", value: "Instant on arrival" },
@@ -296,7 +330,7 @@ export default function Home() {
       <footer className="footer-grid" style={{ background: "#0a0a0a", padding: "48px 48px", display: "grid", gridTemplateColumns: "1fr auto auto", gap: 80, alignItems: "start" }}>
         <div>
           <img src="/logo.png" alt="RideTrue" style={{ height: 32, width: "auto", marginBottom: 16 }} />
-          <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, maxWidth: 240 }}>Transport payments for Nigeria and West Africa. Fair fares, guaranteed delivery, instant driver payouts.</p>
+          <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, maxWidth: 240 }}>Fair transport payments for Nigeria and West Africa. AI verified fares, USDC escrow, instant driver payouts.</p>
         </div>
         <div>
           <p style={{ fontSize: 10, color: "#333", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16, fontWeight: 600 }}>Product</p>
@@ -304,7 +338,7 @@ export default function Home() {
         </div>
         <div>
           <p style={{ fontSize: 10, color: "#333", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16, fontWeight: 600 }}>Built on</p>
-          {["Base blockchain", "Locus payments", "Paystack", "USDC escrow"].map(l => (<p key={l} style={{ fontSize: 13, color: "#555", marginBottom: 10 }}>{l}</p>))}
+          {["Base blockchain", "Locus payments", "USDC escrow", "Privy auth"].map(l => (<p key={l} style={{ fontSize: 13, color: "#555", marginBottom: 10 }}>{l}</p>))}
         </div>
       </footer>
     </main>

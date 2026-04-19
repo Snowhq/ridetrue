@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [fare, setFare] = useState<{ amount: number; description: string } | null>(null);
   const [error, setError] = useState("");
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  const [currentTripId, setCurrentTripId] = useState("");
 
   async function searchFare() {
     if (!form.pickup || !form.destination) {
@@ -37,7 +38,6 @@ export default function Dashboard() {
   async function bookRide() {
     if (!fare) return;
 
-    // Open popup immediately on click — before async call to avoid browser blocking
     const popup = window.open(
       "about:blank",
       "locus-checkout",
@@ -56,11 +56,13 @@ export default function Dashboard() {
           city: form.city,
           fareAmount: fare.amount,
           userId: user?.id,
+          passengerEmail: user?.email?.address || "",
         }),
       });
       const data = await res.json();
 
       if (data.checkoutUrl && popup) {
+        setCurrentTripId(data.tripId || "");
         popup.location.href = data.checkoutUrl;
         setStep("fare");
         setAwaitingConfirm(true);
@@ -77,9 +79,9 @@ export default function Dashboard() {
               clearInterval(timer);
               popup?.close();
               setAwaitingConfirm(false);
-              window.location.href = `/trip/confirmed?pickup=${encodeURIComponent(form.pickup)}&destination=${encodeURIComponent(form.destination)}&amount=${fare.amount}&userId=${user?.id}`;
+              window.location.href = `/trip/confirmed?pickup=${encodeURIComponent(form.pickup)}&destination=${encodeURIComponent(form.destination)}&amount=${fare.amount}&tripId=${data.tripId}&userId=${user?.id}`;
             }
-          } catch { /* cross-origin */ }
+          } catch { }
         }, 800);
       } else {
         popup?.close();
@@ -95,7 +97,7 @@ export default function Dashboard() {
 
   async function confirmPayment() {
     setAwaitingConfirm(false);
-    window.location.href = `/trip/confirmed?pickup=${encodeURIComponent(form.pickup)}&destination=${encodeURIComponent(form.destination)}&amount=${fare?.amount}&userId=${user?.id}`;
+    window.location.href = `/trip/confirmed?pickup=${encodeURIComponent(form.pickup)}&destination=${encodeURIComponent(form.destination)}&amount=${fare?.amount}&tripId=${currentTripId}&userId=${user?.id}`;
   }
 
   return (
@@ -126,12 +128,8 @@ export default function Dashboard() {
 
         {step === "home" && (
           <>
-            <h1 className="display" style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>
-              Book a ride
-            </h1>
-            <p style={{ fontSize: 14, color: "#666", marginBottom: 28, lineHeight: 1.6 }}>
-              Enter your route and we will find the fair market price before you pay anything.
-            </p>
+            <h1 className="display" style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>Book a ride</h1>
+            <p style={{ fontSize: 14, color: "#666", marginBottom: 28, lineHeight: 1.6 }}>Enter your route and we will find the fair market price before you pay anything.</p>
 
             <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", display: "flex", flexDirection: "column", gap: 16 }}>
               <div>

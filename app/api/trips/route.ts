@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import { getTrips } from "../../../lib/trips";
+import { getUserById } from "../../../lib/users";
 
 export async function GET() {
   const trips = getTrips().filter((t: { status: string }) => t.status === "pending");
-  return NextResponse.json({ trips });
+  const tripsWithPassenger = trips.map((t: any) => {
+    const passenger = getUserById(t.passengerId, "passenger");
+    return {
+      ...t,
+      passengerName: passenger?.fullName || "Passenger",
+      passengerPhone: passenger?.phone || "",
+    };
+  });
+  return NextResponse.json({ trips: tripsWithPassenger });
 }

@@ -10,6 +10,8 @@ type Trip = {
   city: string;
   amount: number;
   passengerEmail: string;
+  passengerName: string;
+  passengerPhone: string;
   status: string;
 };
 
@@ -99,9 +101,17 @@ function DriverDashboardContent() {
                     <p style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{trip.destination}</p>
                   </div>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <span style={{ fontSize: 12, color: "#555" }}>{trip.city}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: "#F5C000" }}>${trip.amount.toFixed(2)} USDC</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, color: "#555" }}>Passenger</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{trip.passengerName}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, color: "#555" }}>Phone</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{trip.passengerPhone || "—"}</span>
                 </div>
                 <button
                   onClick={() => acceptTrip(trip.id)}

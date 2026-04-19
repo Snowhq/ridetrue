@@ -11,6 +11,7 @@ function TripConfirmedContent() {
   const amount = searchParams.get("amount") || "0";
   const tripId = searchParams.get("tripId") || "";
   const [status, setStatus] = useState("pending");
+  const [driver, setDriver] = useState<any>(null);
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
 
@@ -20,6 +21,7 @@ function TripConfirmedContent() {
       const res = await fetch(`/api/trips/status?tripId=${tripId}`);
       const data = await res.json();
       if (data.status) setStatus(data.status);
+      if (data.driver) setDriver(data.driver);
     } catch {}
   }
 
@@ -54,7 +56,7 @@ function TripConfirmedContent() {
 
         {completed ? (
           <>
-            <div style={{ width: 72, height: 72, background: "#15803d", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 24px" }}>✓</div>
+            <div style={{ width: 72, height: 72, background: "#F5C000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 24px" }}>✓</div>
             <h1 className="display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>Trip complete</h1>
             <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7, marginBottom: 32 }}>Payment released to the driver. Thanks for riding with RideTrue.</p>
             <button onClick={() => router.push("/dashboard")} style={{ background: "#0a0a0a", color: "#fff", border: "none", padding: "14px 0", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10 }}>
@@ -86,9 +88,31 @@ function TripConfirmedContent() {
             </div>
 
             {/* Trip status */}
-            <div style={{ background: status === "accepted" ? "#f0fdf4" : "#fffbeb", border: `1px solid ${status === "accepted" ? "#bbf7d0" : "#fde68a"}`, borderRadius: 12, padding: 16, marginBottom: 24, textAlign: "left" }}>
-              {status === "accepted" ? (
-                <p style={{ fontSize: 13, color: "#15803d", fontWeight: 600 }}>🚗 Driver accepted your trip — they are on the way.</p>
+            <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: 16, marginBottom: 24, textAlign: "left" }}>
+              {status === "accepted" && driver ? (
+                <div>
+                  <p style={{ fontSize: 13, color: "#92400e", fontWeight: 700, marginBottom: 12 }}>🚗 Driver accepted — on the way</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, color: "#92400e" }}>Driver</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a" }}>{driver.name}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, color: "#92400e" }}>Vehicle</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a" }}>{driver.vehicleModel}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, color: "#92400e" }}>Plate</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a" }}>{driver.vehiclePlate}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 12, color: "#92400e" }}>Phone</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a" }}>{driver.phone}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : status === "accepted" ? (
+                <p style={{ fontSize: 13, color: "#92400e", fontWeight: 600 }}>🚗 Driver accepted your trip — they are on the way.</p>
               ) : (
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 16, height: 16, border: "2px solid #F5C000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite", flexShrink: 0 }} />
@@ -98,7 +122,7 @@ function TripConfirmedContent() {
             </div>
 
             {status === "accepted" && !completed && (
-              <button onClick={confirmArrival} disabled={completing} style={{ background: "#15803d", color: "#fff", border: "none", padding: "14px 0", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10, marginBottom: 12, opacity: completing ? 0.5 : 1 }}>
+              <button onClick={confirmArrival} disabled={completing} style={{ background: "#0a0a0a", color: "#F5C000", border: "none", padding: "14px 0", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10, marginBottom: 12, opacity: completing ? 0.5 : 1 }}>
                 {completing ? "Processing..." : "I have arrived — release payment ✓"}
               </button>
             )}
