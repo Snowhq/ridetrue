@@ -66,9 +66,10 @@ function DriverDashboardContent() {
       <nav style={{ borderBottom: "1px solid #1a1a1a", padding: "0 24px", height: 56, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <a href="/"><img src="/logo.png" alt="RideTrue" style={{ height: 28, width: "auto" }} /></a>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 13, color: "#555" }}>{user?.email?.address}</span>
-          <button onClick={logout} style={{ background: "transparent", border: "1px solid #222", color: "#555", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
-        </div>
+  <span style={{ fontSize: 13, color: "#555" }}>{user?.email?.address}</span>
+  <a href="/driver/profile" style={{ fontSize: 13, color: "#555", fontWeight: 500, textDecoration: "none" }}>Profile</a>
+  <button onClick={logout} style={{ background: "transparent", border: "1px solid #222", color: "#555", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
+</div>
       </nav>
 
       <div style={{ maxWidth: 480, margin: "40px auto", padding: "0 20px" }}>

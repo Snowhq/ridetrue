@@ -1,37 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const BASE = "https://api.paywithlocus.com/api";
-const KEY = process.env.LOCUS_API_KEY;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+import { saveUser, getUserById } from "../../../../lib/users";
 
 export async function POST(req: NextRequest) {
   const { userId } = await req.json();
-
-  try {
-    const res = await fetch(`${BASE}/checkout/sessions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        amount: "0.20",
-        description: "RideTrue — Driver AI Agent Activation",
-        successUrl: `${APP_URL}/driver/dashboard?activated=true`,
-        cancelUrl: `${APP_URL}/driver/activate`,
-        metadata: { userId, type: "driver_activation" },
-      }),
-    });
-
-    const data = await res.json();
-    const checkoutUrl = data?.data?.checkoutUrl;
-
-    if (!checkoutUrl) {
-      return NextResponse.json({ error: "Could not create checkout" }, { status: 500 });
+  if (userId) {
+    const user = getUserById(userId, "driver");
+    if (user) {
+      saveUser({ ...user, activated: true });
     }
-
-    return NextResponse.json({ checkoutUrl });
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
+
+  const res = await fetch("https://beta-api.paywithlocus.com/api/pay/checkout", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.LOCUS_API_KEY}`,
+    },
+    body: JSON.stringify({
+      amount: 0.20,
+      currency: "USDC",
+      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/driver/dashboard?activated=true`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/driver/activate`,
+      metadata: { userId, type: "driver_activation" },
+    }),
+  });
+
+  const data = await res.json();
+  return NextResponse.json({ checkoutUrl: data.checkoutUrl });
 }

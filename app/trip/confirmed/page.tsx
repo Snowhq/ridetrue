@@ -69,6 +69,46 @@ function TripConfirmedContent() {
             <h1 className="display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>Booking confirmed</h1>
             <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7, marginBottom: 32 }}>Your payment is in escrow. The driver has been notified.</p>
 
+            {/* Animated route */}
+<div style={{ background: "#0a0a0a", borderRadius: 16, padding: 20, marginBottom: 24, position: "relative", overflow: "hidden" }}>
+  <style>{`
+    @keyframes moveDot {
+      0% { left: 8%; }
+      100% { left: 88%; }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.7; }
+    }
+  `}</style>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+    <div style={{ textAlign: "center" }}>
+      <div style={{ width: 12, height: 12, background: "#F5C000", borderRadius: "50%", margin: "0 auto 6px", animation: "pulse 1.5s ease infinite" }} />
+      <p style={{ fontSize: 11, color: "#F5C000", fontWeight: 600, maxWidth: 80, textAlign: "center" }}>{pickup}</p>
+    </div>
+    <div style={{ flex: 1, height: 2, background: "#1a1a1a", margin: "0 12px", position: "relative", borderRadius: 2 }}>
+      <div style={{ position: "absolute", width: "100%", height: "100%", background: "linear-gradient(to right, #F5C000, transparent)", borderRadius: 2, opacity: 0.3 }} />
+      <div style={{
+        position: "absolute",
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: 10,
+        height: 10,
+        background: "#F5C000",
+        borderRadius: "50%",
+        animation: "moveDot 3s ease-in-out infinite alternate",
+        boxShadow: "0 0 8px #F5C000",
+      }} />
+    </div>
+    <div style={{ textAlign: "center" }}>
+      <div style={{ width: 12, height: 12, background: "#fff", borderRadius: "50%", margin: "0 auto 6px" }} />
+      <p style={{ fontSize: 11, color: "#fff", fontWeight: 600, maxWidth: 80, textAlign: "center" }}>{destination}</p>
+    </div>
+  </div>
+  <p style={{ fontSize: 11, color: "#444", textAlign: "center" }}>
+    {status === "accepted" ? "🚗 Driver is on the way" : status === "completed" ? "✓ Trip completed" : "⏳ Finding your driver"}
+  </p>
+</div>
             <div style={{ background: "#f8f8f8", borderRadius: 16, padding: 24, marginBottom: 24, textAlign: "left" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <div>
@@ -127,9 +167,21 @@ function TripConfirmedContent() {
               </button>
             )}
 
-            <button onClick={() => router.push("/dashboard")} style={{ background: "transparent", color: "#999", border: "none", padding: "10px 0", fontSize: 13, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
-              Back to dashboard
-            </button>
+            {status === "pending" && (
+  <button onClick={async () => {
+    await fetch("/api/trips/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tripId }),
+    });
+    router.push("/dashboard");
+  }} style={{ background: "transparent", color: "#dc2626", border: "1px solid #fecaca", padding: "12px 0", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10, marginBottom: 8 }}>
+    Cancel ride
+  </button>
+)}
+<button onClick={() => router.push("/dashboard")} style={{ background: "transparent", color: "#999", border: "none", padding: "10px 0", fontSize: 13, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
+  Back to dashboard
+</button>
           </>
         )}
       </div>

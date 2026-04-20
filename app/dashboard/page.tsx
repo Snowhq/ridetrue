@@ -121,6 +121,7 @@ export default function Dashboard() {
   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
     <span style={{ fontSize: 13, color: "#666" }}>{user?.email?.address}</span>
     <a href="/trips" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>History</a>
+    <a href="/profile" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>Profile</a>
     <button onClick={logout} style={{ background: "transparent", border: "1px solid #e5e5e5", color: "#666", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
   </div>
 </nav>
@@ -166,12 +167,42 @@ export default function Dashboard() {
         )}
 
         {step === "searching" && (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <div style={{ width: 48, height: 48, border: "3px solid #F5C000", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 24px" }} />
-            <h2 className="display" style={{ fontSize: 18, fontWeight: 900, color: "#0a0a0a", marginBottom: 8 }}>Finding fair price</h2>
-            <p style={{ fontSize: 14, color: "#666" }}>The AI agent is checking current market rates for your route.</p>
-          </div>
-        )}
+  <div>
+    <style>{`
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+      }
+    `}</style>
+    <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", marginBottom: 16 }}>
+      <div className="skeleton" style={{ height: 14, width: "40%", marginBottom: 20 }} />
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+        <div style={{ flex: 1 }}>
+          <div className="skeleton" style={{ height: 11, width: "60%", marginBottom: 8 }} />
+          <div className="skeleton" style={{ height: 18, width: "80%" }} />
+        </div>
+        <div style={{ width: 24, height: 24, background: "#f0f0f0", borderRadius: "50%" }} />
+        <div style={{ flex: 1 }}>
+          <div className="skeleton" style={{ height: 11, width: "60%", marginBottom: 8 }} />
+          <div className="skeleton" style={{ height: 18, width: "80%" }} />
+        </div>
+      </div>
+      <div style={{ background: "#fffbeb", borderRadius: 12, padding: 20, marginBottom: 20 }}>
+        <div className="skeleton" style={{ height: 11, width: "30%", marginBottom: 10 }} />
+        <div className="skeleton" style={{ height: 36, width: "50%", marginBottom: 8 }} />
+        <div className="skeleton" style={{ height: 11, width: "40%" }} />
+      </div>
+      <div className="skeleton" style={{ height: 48, width: "100%", borderRadius: 10 }} />
+    </div>
+    <p style={{ fontSize: 13, color: "#999", textAlign: "center" }}>🤖 AI agent checking current market rates...</p>
+  </div>
+)}
 
         {(step === "fare" || step === "paying") && fare && (
           <>
