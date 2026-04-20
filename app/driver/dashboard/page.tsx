@@ -21,18 +21,27 @@ function DriverDashboardContent() {
   const activated = searchParams.get("activated");
   const [trips, setTrips] = useState<Trip[]>([]);
   const [accepting, setAccepting] = useState<string | null>(null);
+  const [earnings, setEarnings] = useState(0);
+  const [completedTrips, setCompletedTrips] = useState(0);
 
   async function fetchTrips() {
     const res = await fetch("/api/trips");
     const data = await res.json();
     setTrips(data.trips || []);
+
+    if (user?.id) {
+      const driverRes = await fetch(`/api/trips/driver?driverId=${user.id}`);
+      const driverData = await driverRes.json();
+      setEarnings(driverData.earnings || 0);
+      setCompletedTrips(driverData.trips?.filter((t: any) => t.status === "completed").length || 0);
+    }
   }
 
   useEffect(() => {
     fetchTrips();
     const interval = setInterval(fetchTrips, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   async function acceptTrip(tripId: string) {
     setAccepting(tripId);
@@ -76,6 +85,21 @@ function DriverDashboardContent() {
 
         <h1 className="display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#fff" }}>Driver dashboard</h1>
         <p style={{ fontSize: 14, color: "#555", marginBottom: 28, lineHeight: 1.6 }}>Incoming trips refresh every 5 seconds.</p>
+
+        {/* Earnings card */}
+        <div style={{ background: "#111", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+          <p style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16, fontWeight: 600 }}>Your stats</p>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div>
+              <p style={{ fontSize: 11, color: "#555", marginBottom: 4 }}>Trips completed</p>
+              <p className="display" style={{ fontSize: 24, fontWeight: 900, color: "#fff" }}>{completedTrips}</p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontSize: 11, color: "#555", marginBottom: 4 }}>Total earned</p>
+              <p className="display" style={{ fontSize: 24, fontWeight: 900, color: "#F5C000" }}>${earnings.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
 
         <div style={{ background: "#111", borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <p style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16, fontWeight: 600 }}>

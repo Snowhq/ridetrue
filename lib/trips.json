@@ -94,5 +94,17 @@
     "status": "completed",
     "createdAt": "2026-04-19T13:12:37.784Z",
     "driverId": "did:privy:cmo4c7evd00dl0cjihfbta5d9"
+  },
+  {
+    "id": "c213428c-f6d1-4d7f-ac6b-eb067ae8953c",
+    "pickup": "Kabuga",
+    "destination": "Rijiyar Zaki",
+    "city": "Kano",
+    "amount": 0.25,
+    "passengerId": "did:privy:cmo4c7evd00dl0cjihfbta5d9",
+    "passengerEmail": "nuhuibrahimnuhu91@gmail.com",
+    "status": "completed",
+    "createdAt": "2026-04-19T19:49:31.529Z",
+    "driverId": "did:privy:cmo4c7evd00dl0cjihfbta5d9"
   }
 ]

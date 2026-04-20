@@ -117,12 +117,13 @@ export default function Dashboard() {
       `}</style>
 
       <nav style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "0 24px", height: 56, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <a href="/"><img src="/logo.png" alt="RideTrue" style={{ height: 28, width: "auto" }} /></a>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 13, color: "#666" }}>{user?.email?.address}</span>
-          <button onClick={logout} style={{ background: "transparent", border: "1px solid #e5e5e5", color: "#666", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
-        </div>
-      </nav>
+  <a href="/"><img src="/logo.png" alt="RideTrue" style={{ height: 28, width: "auto" }} /></a>
+  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <span style={{ fontSize: 13, color: "#666" }}>{user?.email?.address}</span>
+    <a href="/trips" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>History</a>
+    <button onClick={logout} style={{ background: "transparent", border: "1px solid #e5e5e5", color: "#666", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
+  </div>
+</nav>
 
       <div style={{ maxWidth: 480, margin: "40px auto", padding: "0 20px" }}>
 
