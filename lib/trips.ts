@@ -1,52 +1,63 @@
-import fs from "fs";
-import path from "path";
+import sql from "./db";
 
-const FILE = path.join(process.cwd(), "lib/trips.json");
-
-export type Trip = {
-  id: string;
-  pickup: string;
-  destination: string;
-  city: string;
-  amount: number;
-  passengerId: string;
-  passengerEmail: string;
-  driverId?: string;
-  status: "pending" | "accepted" | "arrived" | "completed";
-  createdAt: string;
-};
-
-function readTrips(): Trip[] {
-  try {
-    return JSON.parse(fs.readFileSync(FILE, "utf-8"));
-  } catch {
-    return [];
-  }
+export async function addTrip(trip: any) {
+  const result = await sql`
+    INSERT INTO trips (id, pickup, destination, city, amount, passenger_id, passenger_email, status)
+    VALUES (${trip.id}, ${trip.pickup}, ${trip.destination}, ${trip.city}, ${trip.amount}, ${trip.passengerId}, ${trip.passengerEmail}, 'pending')
+    RETURNING *
+  `;
+  return result[0];
 }
 
-function writeTrips(trips: Trip[]) {
-  fs.writeFileSync(FILE, JSON.stringify(trips, null, 2));
+export async function getTrips() {
+  const result = await sql`SELECT * FROM trips ORDER BY created_at DESC`;
+  return result.map((r: any) => ({
+    id: r.id,
+    pickup: r.pickup,
+    destination: r.destination,
+    city: r.city,
+    amount: parseFloat(r.amount),
+    passengerId: r.passenger_id,
+    passengerEmail: r.passenger_email,
+    driverId: r.driver_id,
+    status: r.status,
+    createdAt: r.created_at,
+  }));
 }
 
-export function addTrip(trip: Trip) {
-  const trips = readTrips();
-  trips.push(trip);
-  writeTrips(trips);
+export async function getTripById(id: string) {
+  const result = await sql`SELECT * FROM trips WHERE id = ${id}`;
+  if (!result[0]) return null;
+  const r = result[0];
+  return {
+    id: r.id,
+    pickup: r.pickup,
+    destination: r.destination,
+    city: r.city,
+    amount: parseFloat(r.amount),
+    passengerId: r.passenger_id,
+    passengerEmail: r.passenger_email,
+    driverId: r.driver_id,
+    status: r.status,
+    createdAt: r.created_at,
+  };
 }
 
-export function getTrips(): Trip[] {
-  return readTrips();
-}
+export async function updateTrip(id: string, updates: any) {
+  const fields = [];
+  const values: any[] = [];
 
-export function updateTrip(id: string, updates: Partial<Trip>) {
-  const trips = readTrips();
-  const index = trips.findIndex(t => t.id === id);
-  if (index === -1) return null;
-  trips[index] = { ...trips[index], ...updates };
-  writeTrips(trips);
-  return trips[index];
-}
+  if (updates.status) { fields.push("status"); values.push(updates.status); }
+  if (updates.driverId) { fields.push("driver_id"); values.push(updates.driverId); }
 
-export function getTripById(id: string): Trip | null {
-  return readTrips().find(t => t.id === id) || null;
+  if (fields.length === 0) return null;
+
+  const result = await sql`
+    UPDATE trips SET
+      status = COALESCE(${updates.status}, status),
+      driver_id = COALESCE(${updates.driverId || null}, driver_id)
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return result[0];
 }

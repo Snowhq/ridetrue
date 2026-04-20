@@ -4,6 +4,7 @@ import { getTrips } from "../../../../lib/trips";
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) return NextResponse.json({ trips: [] });
-  const trips = getTrips().filter((t: any) => t.passengerId === userId);
+  const allTrips = await getTrips();
+  const trips = allTrips.filter((t: any) => t.passengerId === userId);
   return NextResponse.json({ trips: trips.reverse() });
 }

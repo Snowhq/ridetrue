@@ -3,12 +3,10 @@ import { saveUser } from "../../../../lib/users";
 
 export async function POST(req: NextRequest) {
   const { fullName, phone, city, vehicleType, vehiclePlate, vehicleModel, userId, email } = await req.json();
-
   if (!fullName || !phone || !city || !vehicleType || !vehiclePlate || !vehicleModel) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
-
-  saveUser({
+  await saveUser({
     userId: userId || email,
     email: email || "",
     fullName,
@@ -21,6 +19,5 @@ export async function POST(req: NextRequest) {
     activated: false,
     createdAt: new Date().toISOString(),
   });
-
   return NextResponse.json({ ok: true });
 }

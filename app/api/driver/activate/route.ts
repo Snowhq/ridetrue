@@ -4,9 +4,9 @@ import { saveUser, getUserById } from "../../../../lib/users";
 export async function POST(req: NextRequest) {
   const { userId } = await req.json();
   if (userId) {
-    const user = getUserById(userId, "driver");
+    const user = await getUserById(userId, "driver");
     if (user) {
-      saveUser({ ...user, activated: true });
+      await saveUser({ ...user, activated: true });
     }
   }
 

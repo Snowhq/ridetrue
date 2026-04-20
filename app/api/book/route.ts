@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save trip
-    addTrip({
+    await addTrip({
       id: tripId,
       pickup,
       destination,
