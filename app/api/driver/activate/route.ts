@@ -10,15 +10,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const res = await fetch("https://beta-api.paywithlocus.com/api/pay/checkout", {
+  const res = await fetch("https://beta-api.paywithlocus.com/api/checkout/sessions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${process.env.LOCUS_API_KEY}`,
     },
     body: JSON.stringify({
-      amount: 0.20,
-      currency: "USDC",
+      amount: (0.20).toFixed(2),
+      description: "RideTrue — AI agent activation",
       successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/driver/dashboard?activated=true`,
       cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/driver/activate`,
       metadata: { userId, type: "driver_activation" },
@@ -26,5 +26,6 @@ export async function POST(req: NextRequest) {
   });
 
   const data = await res.json();
-  return NextResponse.json({ checkoutUrl: data.checkoutUrl });
+  const checkoutUrl = data?.data?.checkoutUrl;
+  return NextResponse.json({ checkoutUrl });
 }
