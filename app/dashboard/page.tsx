@@ -156,6 +156,23 @@ export default function Dashboard() {
 
             <div style={{ marginTop: 24, background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #f0f0f0" }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>How your money is protected</p>
+              <div style={{ marginTop: 16, background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #f0f0f0" }}>
+  <p style={{ fontSize: 12, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>How to pay</p>
+  {[
+    { icon: "1️⃣", text: "Get USDC on Base — buy from Coinbase, Binance, or any exchange" },
+    { icon: "2️⃣", text: "When you click pay, a Locus checkout opens" },
+    { icon: "3️⃣", text: "Connect your wallet or use your Locus account to pay" },
+    { icon: "4️⃣", text: "Payment is held in escrow until you confirm arrival" },
+  ].map(t => (
+    <div key={t.text} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+      <span style={{ fontSize: 14 }}>{t.icon}</span>
+      <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6 }}>{t.text}</p>
+    </div>
+  ))}
+  <a href="https://beta.paywithlocus.com" target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#F5C000", color: "#0a0a0a", padding: "11px 0", borderRadius: 10, fontSize: 13, fontWeight: 700, textAlign: "center", textDecoration: "none", marginTop: 12 }}>
+    Get a Locus wallet →
+  </a>
+</div>
               {["Your payment is held in escrow until you arrive", "The driver only gets paid after you confirm", "If the trip does not happen you get refunded"].map(t => (
                 <div key={t} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
                   <span style={{ color: "#F5C000", fontSize: 16, lineHeight: 1.4 }}>✓</span>
