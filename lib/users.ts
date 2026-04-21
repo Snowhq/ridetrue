@@ -11,13 +11,14 @@ export type User = {
   vehiclePlate?: string;
   vehicleModel?: string;
   activated?: boolean;
+  walletAddress?: string | null;
   createdAt: string;
 };
 
 export async function saveUser(user: User) {
   await sql`
-    INSERT INTO users (user_id, email, full_name, phone, city, role, vehicle_type, vehicle_plate, vehicle_model, activated)
-    VALUES (${user.userId}, ${user.email}, ${user.fullName}, ${user.phone}, ${user.city}, ${user.role}, ${user.vehicleType || null}, ${user.vehiclePlate || null}, ${user.vehicleModel || null}, ${user.activated || false})
+    INSERT INTO users (user_id, email, full_name, phone, city, role, vehicle_type, vehicle_plate, vehicle_model, activated, wallet_address)
+    VALUES (${user.userId}, ${user.email}, ${user.fullName}, ${user.phone}, ${user.city}, ${user.role}, ${user.vehicleType || null}, ${user.vehiclePlate || null}, ${user.vehicleModel || null}, ${user.activated || false}, ${user.walletAddress || null})
     ON CONFLICT (user_id, role) DO UPDATE SET
       full_name = EXCLUDED.full_name,
       phone = EXCLUDED.phone,
@@ -25,7 +26,8 @@ export async function saveUser(user: User) {
       vehicle_type = EXCLUDED.vehicle_type,
       vehicle_plate = EXCLUDED.vehicle_plate,
       vehicle_model = EXCLUDED.vehicle_model,
-      activated = EXCLUDED.activated
+      activated = EXCLUDED.activated,
+      wallet_address = EXCLUDED.wallet_address
   `;
 }
 
@@ -49,6 +51,7 @@ export async function getUserById(userId: string, role?: string): Promise<User |
     vehiclePlate: r.vehicle_plate,
     vehicleModel: r.vehicle_model,
     activated: r.activated,
+    walletAddress: r.wallet_address,
     createdAt: r.created_at,
   };
 }
