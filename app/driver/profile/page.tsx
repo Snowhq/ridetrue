@@ -51,6 +51,7 @@ export default function DriverProfile() {
             { label: "Phone", value: profile?.phone },
             { label: "City", value: profile?.city },
             { label: "Email", value: user?.email?.address },
+            { label: "Wallet", value: profile?.walletAddress ? `${profile.walletAddress.slice(0, 6)}...${profile.walletAddress.slice(-4)}` : "Not connected" },
           ].map(item => (
             <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #1a1a1a" }}>
               <span style={{ fontSize: 13, color: "#555" }}>{item.label}</span>
