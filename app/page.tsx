@@ -28,6 +28,14 @@ const CARD_STEPS = [
   { step: "Step 4 of 4", label: "Trip complete" },
 ];
 
+const DEMO_ROUTES = [
+  { from: "Lagos Island", to: "Victoria Island", fare: "$0.25" },
+  { from: "Abuja CBD", to: "Airport", fare: "$0.35" },
+  { from: "Kano Sabon Gari", to: "Tarauni", fare: "$0.10" },
+  { from: "PH GRA", to: "Trans Amadi", fare: "$0.25" },
+  { from: "Ibadan Bodija", to: "Dugbe", fare: "$0.15" },
+  { from: "Enugu GRA", to: "New Haven", fare: "$0.20" },
+];
 const WHY = [
   {
     title: "AI verified fares",
@@ -48,6 +56,7 @@ export default function Home() {
   const router = useRouter();
   const [activeCity, setActiveCity] = useState(0);
   const [cardStep, setCardStep] = useState(0);
+  const [routeStep, setRouteStep] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => setActiveCity(prev => (prev + 1) % CITIES.length), 2500);
@@ -55,9 +64,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => setCardStep(prev => (prev + 1) % CARD_STEPS.length), 2000);
-    return () => clearInterval(interval);
-  }, []);
+  const interval = setInterval(() => {
+    setCardStep(prev => {
+      const next = (prev + 1) % CARD_STEPS.length;
+      if (next === 0) setRouteStep(r => (r + 1) % DEMO_ROUTES.length);
+      return next;
+    });
+  }, 2000);
+  return () => clearInterval(interval);
+}, []);
 
   async function handleCTA() {
     if (!authenticated) { login(); return; }
@@ -189,17 +204,17 @@ export default function Home() {
             <span style={{ background: "#fffbeb", border: "1px solid #F5C000", color: "#92400e", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100 }}>Locus escrow</span>
           </div>
           <div style={{ marginBottom: 10 }}>
-            <p style={{ fontSize: 10, color: "#aaa", marginBottom: 3 }}>From</p>
-            <p style={{ fontSize: 13, fontWeight: 600 }}>Lagos Island, Lagos</p>
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <p style={{ fontSize: 10, color: "#aaa", marginBottom: 3 }}>To</p>
-            <p style={{ fontSize: 13, fontWeight: 600 }}>Victoria Island, Lagos</p>
-          </div>
+  <p style={{ fontSize: 10, color: "#aaa", marginBottom: 3 }}>From</p>
+  <p style={{ fontSize: 13, fontWeight: 600 }}>{DEMO_ROUTES[routeStep].from}</p>
+</div>
+<div style={{ marginBottom: 14 }}>
+  <p style={{ fontSize: 10, color: "#aaa", marginBottom: 3 }}>To</p>
+  <p style={{ fontSize: 13, fontWeight: 600 }}>{DEMO_ROUTES[routeStep].to}</p>
+</div>
           <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: 14, marginBottom: 14 }}>
             <p style={{ fontSize: 10, color: "#92400e", marginBottom: 5 }}>AI verified fare</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <p className="display" style={{ fontSize: 20, fontWeight: 900, color: "#0a0a0a" }}>$0.25</p>
+              <p className="display" style={{ fontSize: 20, fontWeight: 900, color: "#0a0a0a" }}>{DEMO_ROUTES[routeStep].fare}</p>
               <span style={{ fontSize: 11, color: "#92400e", fontWeight: 600 }}>USDC</span>
             </div>
           </div>
