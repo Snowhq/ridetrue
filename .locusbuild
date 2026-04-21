@@ -4,6 +4,7 @@
       "path": ".",
       "port": 3000,
       "healthCheck": "/api/health",
+      "buildCommand": "npm run build",
       "startCommand": "npm start"
     }
   }
