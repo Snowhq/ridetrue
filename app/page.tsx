@@ -115,6 +115,7 @@ export default function Home() {
           <a href="#how" style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>How it works</a>
           <a href="#cities" style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>Cities</a>
           <a href="#drivers" style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>Drive with us</a>
+          <a href="/calculate" style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>Estimate fare</a>
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

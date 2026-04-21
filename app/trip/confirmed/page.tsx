@@ -14,6 +14,8 @@ function TripConfirmedContent() {
   const [driver, setDriver] = useState<any>(null);
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [rated, setRated] = useState(false);
 
   async function fetchStatus() {
     if (!tripId) return;
@@ -55,14 +57,35 @@ function TripConfirmedContent() {
       <div style={{ width: "100%", maxWidth: 440, textAlign: "center" }}>
 
         {completed ? (
-          <>
-            <div style={{ width: 72, height: 72, background: "#F5C000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 24px" }}>✓</div>
-            <h1 className="display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>Trip complete</h1>
-            <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7, marginBottom: 32 }}>Payment released to the driver. Thanks for riding with RideTrue.</p>
-            <button onClick={() => router.push("/dashboard")} style={{ background: "#0a0a0a", color: "#fff", border: "none", padding: "14px 0", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10 }}>
-              Book another ride →
-            </button>
-          </>
+  <>
+    <div style={{ width: 72, height: 72, background: "#F5C000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 24px" }}>✓</div>
+    <h1 className="display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>Trip complete</h1>
+    <p style={{ fontSize: 15, color: "#666", lineHeight: 1.7, marginBottom: 24 }}>Payment released to the driver. Thanks for riding with RideTrue.</p>
+
+    {!rated ? (
+      <div style={{ background: "#f8f8f8", borderRadius: 16, padding: 24, marginBottom: 24, textAlign: "center" }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a", marginBottom: 16 }}>How was your ride?</p>
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <button key={star} onClick={() => setRating(star)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 32, color: star <= rating ? "#F5C000" : "#e5e5e5", transition: "color 0.2s" }}>★</button>
+          ))}
+        </div>
+        {rating > 0 && (
+          <button onClick={() => setRated(true)} style={{ background: "#0a0a0a", color: "#fff", border: "none", padding: "11px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", borderRadius: 10 }}>
+            Submit rating
+          </button>
+        )}
+      </div>
+    ) : (
+      <div style={{ background: "#f8f8f8", borderRadius: 16, padding: 20, marginBottom: 24, textAlign: "center" }}>
+        <p style={{ fontSize: 13, color: "#666" }}>Thanks for rating your trip.</p>
+      </div>
+    )}
+
+    <button onClick={() => router.push("/dashboard")} style={{ background: "#0a0a0a", color: "#fff", border: "none", padding: "14px 0", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10 }}>
+      Book another ride →
+    </button>
+  </>
         ) : (
           <>
             <div style={{ width: 72, height: 72, background: "#F5C000", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 24px" }}>✓</div>
@@ -105,9 +128,14 @@ function TripConfirmedContent() {
       <p style={{ fontSize: 11, color: "#fff", fontWeight: 600, maxWidth: 80, textAlign: "center" }}>{destination}</p>
     </div>
   </div>
-  <p style={{ fontSize: 11, color: "#444", textAlign: "center" }}>
-    {status === "accepted" ? "🚗 Driver is on the way" : status === "completed" ? "✓ Trip completed" : "⏳ Finding your driver"}
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <p style={{ fontSize: 11, color: "#444" }}>
+    {status === "accepted" ? "Driver is on the way" : status === "completed" ? "Trip completed" : "Finding your driver..."}
   </p>
+  {status === "accepted" && (
+    <p style={{ fontSize: 11, color: "#F5C000", fontWeight: 600 }}>ETA ~10 min</p>
+  )}
+</div>
 </div>
             <div style={{ background: "#f8f8f8", borderRadius: 16, padding: 24, marginBottom: 24, textAlign: "left" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -180,6 +208,15 @@ function TripConfirmedContent() {
   </button>
 )}
 <button onClick={() => router.push("/dashboard")} style={{ background: "transparent", color: "#999", border: "none", padding: "10px 0", fontSize: 13, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
+  {status === "accepted" && !completed && (
+  <button onClick={() => {
+    const url = `${window.location.origin}/trip/track?tripId=${tripId}`;
+    navigator.clipboard.writeText(url);
+    alert("Trip link copied! Share with someone you trust.");
+  }} style={{ background: "transparent", color: "#0a0a0a", border: "1px solid #e5e5e5", padding: "12px 0", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10, marginBottom: 8 }}>
+    Share trip link
+  </button>
+)}
   Back to dashboard
 </button>
           </>

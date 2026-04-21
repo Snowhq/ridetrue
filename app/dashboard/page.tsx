@@ -1,8 +1,38 @@
 "use client";
 import { usePrivy } from "@privy-io/react-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CITIES = ["Lagos", "Abuja", "Kano", "Port Harcourt", "Ibadan", "Enugu"];
+
+function AvailableDrivers({ city }: { city: string }) {
+  const [drivers, setDrivers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/drivers?city=${city}`)
+      .then(r => r.json())
+      .then(d => setDrivers(d.drivers || []));
+  }, [city]);
+
+  if (drivers.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: 16, background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #f0f0f0" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <p style={{ fontSize: 12, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em" }}>Available in {city}</p>
+        <span style={{ background: "#f0fdf4", color: "#15803d", padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{drivers.length} online</span>
+      </div>
+      {drivers.map((d: any, i: number) => (
+        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < drivers.length - 1 ? "1px solid #f0f0f0" : "none" }}>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a" }}>{d.full_name}</p>
+            <p style={{ fontSize: 11, color: "#999" }}>{d.vehicle_type} · {d.vehicle_model}</p>
+          </div>
+          <span style={{ width: 8, height: 8, background: "#22c55e", borderRadius: "50%", display: "inline-block" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { user, logout } = usePrivy();
@@ -14,10 +44,7 @@ export default function Dashboard() {
   const [currentTripId, setCurrentTripId] = useState("");
 
   async function searchFare() {
-    if (!form.pickup || !form.destination) {
-      setError("Please enter pickup and destination.");
-      return;
-    }
+    if (!form.pickup || !form.destination) { setError("Please enter pickup and destination."); return; }
     setError("");
     setStep("searching");
     try {
@@ -37,62 +64,29 @@ export default function Dashboard() {
 
   async function bookRide() {
     if (!fare) return;
-
-    const popup = window.open(
-      "about:blank",
-      "locus-checkout",
-      "width=500,height=700,left=" + (window.screenX + (window.outerWidth - 500) / 2) + ",top=" + (window.screenY + (window.outerHeight - 700) / 2)
-    );
-
+    const popup = window.open("about:blank", "locus-checkout", "width=500,height=700,left=" + (window.screenX + (window.outerWidth - 500) / 2) + ",top=" + (window.screenY + (window.outerHeight - 700) / 2));
     setStep("paying");
-
     try {
       const res = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pickup: form.pickup,
-          destination: form.destination,
-          city: form.city,
-          fareAmount: fare.amount,
-          userId: user?.id,
-          passengerEmail: user?.email?.address || "",
-        }),
+        body: JSON.stringify({ pickup: form.pickup, destination: form.destination, city: form.city, fareAmount: fare.amount, userId: user?.id, passengerEmail: user?.email?.address || "" }),
       });
       const data = await res.json();
-
       if (data.checkoutUrl && popup) {
         setCurrentTripId(data.tripId || "");
         popup.location.href = data.checkoutUrl;
         setStep("fare");
         setAwaitingConfirm(true);
-
         const timer = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(timer);
-            setAwaitingConfirm(false);
-            return;
-          }
+          if (popup?.closed) { clearInterval(timer); setAwaitingConfirm(false); return; }
           try {
             const url = popup?.location?.href || "";
-            if (url.includes("confirmed")) {
-              clearInterval(timer);
-              popup?.close();
-              setAwaitingConfirm(false);
-              window.location.href = `/trip/confirmed?pickup=${encodeURIComponent(form.pickup)}&destination=${encodeURIComponent(form.destination)}&amount=${fare.amount}&tripId=${data.tripId}&userId=${user?.id}`;
-            }
+            if (url.includes("confirmed")) { clearInterval(timer); popup?.close(); setAwaitingConfirm(false); window.location.href = `/trip/confirmed?pickup=${encodeURIComponent(form.pickup)}&destination=${encodeURIComponent(form.destination)}&amount=${fare.amount}&tripId=${data.tripId}&userId=${user?.id}`; }
           } catch { }
         }, 800);
-      } else {
-        popup?.close();
-        setError(data.error || "Booking failed.");
-        setStep("fare");
-      }
-    } catch {
-      popup?.close();
-      setError("Could not complete booking.");
-      setStep("fare");
-    }
+      } else { popup?.close(); setError(data.error || "Booking failed."); setStep("fare"); }
+    } catch { popup?.close(); setError("Could not complete booking."); setStep("fare"); }
   }
 
   async function confirmPayment() {
@@ -111,41 +105,40 @@ export default function Dashboard() {
         .btn-primary { background: #F5C000; color: #0a0a0a; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 700; transition: all 0.2s; }
         .btn-primary:hover:not(:disabled) { background: #e6b400; }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-dark { background: #0a0a0a; color: #fff; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 700; transition: all 0.2s; }
-        .btn-dark:hover { background: #222; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
       `}</style>
 
       <nav style={{ background: "#fff", borderBottom: "1px solid #f0f0f0", padding: "0 24px", height: 56, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-  <a href="/"><img src="/logo.png" alt="RideTrue" style={{ height: 28, width: "auto" }} /></a>
-  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-    <span style={{ fontSize: 13, color: "#666" }}>{user?.email?.address}</span>
-    <a href="/trips" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>History</a>
-    <a href="/profile" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>Profile</a>
-    <button onClick={logout} style={{ background: "transparent", border: "1px solid #e5e5e5", color: "#666", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
-  </div>
-</nav>
+        <a href="/"><img src="/logo.png" alt="RideTrue" style={{ height: 28, width: "auto" }} /></a>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <a href="/trips" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>History</a>
+          <a href="/profile" style={{ fontSize: 13, color: "#666", fontWeight: 500, textDecoration: "none" }}>Profile</a>
+          <button onClick={logout} style={{ background: "transparent", border: "1px solid #e5e5e5", color: "#666", padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, fontFamily: "inherit" }}>Sign out</button>
+        </div>
+      </nav>
 
       <div style={{ maxWidth: 480, margin: "40px auto", padding: "0 20px" }}>
 
         {step === "home" && (
           <>
-            <h1 className="display" style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#0a0a0a" }}>Book a ride</h1>
-            <p style={{ fontSize: 14, color: "#666", marginBottom: 28, lineHeight: 1.6 }}>Enter your route and we will find the fair market price before you pay anything.</p>
+            <h1 className="display" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 6, color: "#0a0a0a" }}>Book a ride</h1>
+            <p style={{ fontSize: 14, color: "#666", marginBottom: 24, lineHeight: 1.6 }}>Enter your route and get the fair market price before you pay.</p>
 
-            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", display: "flex", flexDirection: "column", gap: 16, marginBottom: 16 }}>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#0a0a0a", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>City</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#999", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>City</label>
                 <select value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} style={{ width: "100%", border: "1.5px solid #e5e5e5", borderRadius: 10, padding: "11px 14px", fontSize: 14, color: "#0a0a0a", background: "#fafafa", appearance: "none" }}>
                   {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#0a0a0a", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Pickup location</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#999", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Pickup</label>
                 <input type="text" placeholder="e.g. Lagos Island" value={form.pickup} onChange={e => setForm({ ...form, pickup: e.target.value })} style={{ width: "100%", border: "1.5px solid #e5e5e5", borderRadius: 10, padding: "11px 14px", fontSize: 14, color: "#0a0a0a", background: "#fafafa" }} />
               </div>
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: "#0a0a0a", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Destination</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "#999", display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>Destination</label>
                 <input type="text" placeholder="e.g. Victoria Island" value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })} style={{ width: "100%", border: "1.5px solid #e5e5e5", borderRadius: 10, padding: "11px 14px", fontSize: 14, color: "#0a0a0a", background: "#fafafa" }} />
               </div>
               {error && <p style={{ fontSize: 13, color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "10px 14px", borderRadius: 8 }}>{error}</p>}
@@ -154,78 +147,63 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div style={{ marginTop: 24, background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #f0f0f0" }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>How your money is protected</p>
-              <div style={{ marginTop: 16, background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #f0f0f0" }}>
-  <p style={{ fontSize: 12, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>How to pay</p>
-  {[
-    { icon: "1️⃣", text: "Get USDC on Base — buy from Coinbase, Binance, or any exchange" },
-    { icon: "2️⃣", text: "When you click pay, a Locus checkout opens" },
-    { icon: "3️⃣", text: "Connect your wallet or use your Locus account to pay" },
-    { icon: "4️⃣", text: "Payment is held in escrow until you confirm arrival" },
-  ].map(t => (
-    <div key={t.text} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
-      <span style={{ fontSize: 14 }}>{t.icon}</span>
-      <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6 }}>{t.text}</p>
-    </div>
-  ))}
-  <a href="https://beta.paywithlocus.com" target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#F5C000", color: "#0a0a0a", padding: "11px 0", borderRadius: 10, fontSize: 13, fontWeight: 700, textAlign: "center", textDecoration: "none", marginTop: 12 }}>
-    Get a Locus wallet →
-  </a>
-</div>
-              {["Your payment is held in escrow until you arrive", "The driver only gets paid after you confirm", "If the trip does not happen you get refunded"].map(t => (
-                <div key={t} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
-                  <span style={{ color: "#F5C000", fontSize: 16, lineHeight: 1.4 }}>✓</span>
-                  <p style={{ fontSize: 13, color: "#555", lineHeight: 1.6 }}>{t}</p>
+            {/* Available drivers */}
+            <AvailableDrivers city={form.city} />
+
+            {/* How it works */}
+            <div style={{ marginTop: 16, background: "#fff", borderRadius: 16, padding: 20, border: "1px solid #f0f0f0" }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 16 }}>How payment works</p>
+              {[
+                { step: "01", title: "Get USDC on Base", desc: "Buy from Coinbase, Binance, or any exchange and transfer to Base network." },
+                { step: "02", title: "Pay via Locus checkout", desc: "A secure checkout opens. Pay with your wallet or Locus account." },
+                { step: "03", title: "Funds held in escrow", desc: "Your USDC is locked until you confirm arrival. Driver gets paid instantly after." },
+              ].map(item => (
+                <div key={item.step} style={{ display: "flex", gap: 14, marginBottom: 16 }}>
+                  <span style={{ fontSize: 11, fontWeight: 900, color: "#F5C000", fontFamily: "Unbounded", minWidth: 20 }}>{item.step}</span>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#0a0a0a", marginBottom: 2 }}>{item.title}</p>
+                    <p style={{ fontSize: 12, color: "#999", lineHeight: 1.6 }}>{item.desc}</p>
+                  </div>
                 </div>
               ))}
+              <a href="https://beta.paywithlocus.com" target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#0a0a0a", color: "#F5C000", padding: "11px 0", borderRadius: 10, fontSize: 13, fontWeight: 700, textAlign: "center", textDecoration: "none", marginTop: 4 }}>
+                Get a Locus wallet →
+              </a>
             </div>
           </>
         )}
 
         {step === "searching" && (
-  <div>
-    <style>{`
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-      .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-        border-radius: 8px;
-      }
-    `}</style>
-    <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", marginBottom: 16 }}>
-      <div className="skeleton" style={{ height: 14, width: "40%", marginBottom: 20 }} />
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
-        <div style={{ flex: 1 }}>
-          <div className="skeleton" style={{ height: 11, width: "60%", marginBottom: 8 }} />
-          <div className="skeleton" style={{ height: 18, width: "80%" }} />
-        </div>
-        <div style={{ width: 24, height: 24, background: "#f0f0f0", borderRadius: "50%" }} />
-        <div style={{ flex: 1 }}>
-          <div className="skeleton" style={{ height: 11, width: "60%", marginBottom: 8 }} />
-          <div className="skeleton" style={{ height: 18, width: "80%" }} />
-        </div>
-      </div>
-      <div style={{ background: "#fffbeb", borderRadius: 12, padding: 20, marginBottom: 20 }}>
-        <div className="skeleton" style={{ height: 11, width: "30%", marginBottom: 10 }} />
-        <div className="skeleton" style={{ height: 36, width: "50%", marginBottom: 8 }} />
-        <div className="skeleton" style={{ height: 11, width: "40%" }} />
-      </div>
-      <div className="skeleton" style={{ height: 48, width: "100%", borderRadius: 10 }} />
-    </div>
-    <p style={{ fontSize: 13, color: "#999", textAlign: "center" }}>🤖 AI agent checking current market rates...</p>
-  </div>
-)}
+          <div>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", marginBottom: 16 }}>
+              <div className="skeleton" style={{ height: 14, width: "40%", marginBottom: 20 }} />
+              <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton" style={{ height: 11, width: "60%", marginBottom: 8 }} />
+                  <div className="skeleton" style={{ height: 18, width: "80%" }} />
+                </div>
+                <div style={{ width: 24, height: 24, background: "#f0f0f0", borderRadius: "50%" }} />
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton" style={{ height: 11, width: "60%", marginBottom: 8 }} />
+                  <div className="skeleton" style={{ height: 18, width: "80%" }} />
+                </div>
+              </div>
+              <div style={{ background: "#fffbeb", borderRadius: 12, padding: 20, marginBottom: 20 }}>
+                <div className="skeleton" style={{ height: 11, width: "30%", marginBottom: 10 }} />
+                <div className="skeleton" style={{ height: 36, width: "50%", marginBottom: 8 }} />
+                <div className="skeleton" style={{ height: 11, width: "40%" }} />
+              </div>
+              <div className="skeleton" style={{ height: 48, width: "100%", borderRadius: 10 }} />
+            </div>
+            <p style={{ fontSize: 13, color: "#999", textAlign: "center" }}>AI agent checking current market rates...</p>
+          </div>
+        )}
 
         {(step === "fare" || step === "paying") && fare && (
           <>
             <a onClick={() => { setStep("home"); setAwaitingConfirm(false); }} style={{ fontSize: 13, color: "#999", display: "inline-block", marginBottom: 24, cursor: "pointer" }}>← Change route</a>
             <div style={{ background: "#fff", borderRadius: 16, padding: 24, border: "1px solid #f0f0f0", marginBottom: 16 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 16 }}>Your route</p>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 16 }}>Your route</p>
               <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 11, color: "#999", marginBottom: 3 }}>From</p>
@@ -238,30 +216,29 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: 20, marginBottom: 20 }}>
-                <p style={{ fontSize: 12, color: "#92400e", marginBottom: 6 }}>Fair market fare</p>
-                <p className="display" style={{ fontSize: 32, fontWeight: 900, color: "#0a0a0a", marginBottom: 6 }}>${fare.amount.toFixed(2)} USDC</p>
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                <p style={{ fontSize: 11, color: "#92400e", marginBottom: 6 }}>AI verified fare</p>
+                <p className="display" style={{ fontSize: 32, fontWeight: 900, color: "#0a0a0a", marginBottom: 4 }}>${fare.amount.toFixed(2)} USDC</p>
                 <p style={{ fontSize: 12, color: "#92400e" }}>{fare.description}</p>
               </div>
 
-              <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: 14, marginBottom: 20, display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ fontSize: 18 }}>🔐</span>
-                <p style={{ fontSize: 13, color: "#15803d", lineHeight: 1.5 }}>This amount will be held in escrow. The driver only receives it after you confirm arrival.</p>
+              <div style={{ background: "#f8f8f8", borderRadius: 10, padding: 14, marginBottom: 20 }}>
+                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6 }}>Held in escrow on Base. Driver receives payment only after you confirm arrival.</p>
               </div>
 
               {error && <p style={{ fontSize: 13, color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "10px 14px", borderRadius: 8, marginBottom: 16 }}>{error}</p>}
 
               {!awaitingConfirm ? (
                 <button className="btn-primary" onClick={bookRide} disabled={step === "paying"} style={{ padding: "14px", fontSize: 15, borderRadius: 10, width: "100%" }}>
-                  {step === "paying" ? "Opening checkout..." : `Pay $${fare.amount.toFixed(2)} and book →`}
+                  {step === "paying" ? "Opening checkout..." : `Pay $${fare.amount.toFixed(2)} USDC →`}
                 </button>
               ) : (
-                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12, padding: 16 }}>
-                  <p style={{ fontSize: 13, color: "#15803d", marginBottom: 12, fontWeight: 600 }}>Paid on Locus? Click to confirm your booking.</p>
-                  <button onClick={confirmPayment} style={{ background: "#15803d", color: "#fff", border: "none", padding: "12px 0", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10 }}>
+                <div style={{ background: "#f8f8f8", borderRadius: 12, padding: 16 }}>
+                  <p style={{ fontSize: 13, color: "#666", marginBottom: 12, fontWeight: 600 }}>Complete payment in the popup, then confirm below.</p>
+                  <button onClick={confirmPayment} style={{ background: "#0a0a0a", color: "#F5C000", border: "none", padding: "13px 0", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", width: "100%", borderRadius: 10, marginBottom: 8 }}>
                     I paid — confirm booking ✓
                   </button>
-                  <button onClick={() => setAwaitingConfirm(false)} style={{ background: "transparent", color: "#aaa", border: "none", padding: "8px 0", fontSize: 12, cursor: "pointer", fontFamily: "inherit", width: "100%", marginTop: 6 }}>
+                  <button onClick={() => setAwaitingConfirm(false)} style={{ background: "transparent", color: "#aaa", border: "none", padding: "8px 0", fontSize: 12, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
                     Cancel
                   </button>
                 </div>

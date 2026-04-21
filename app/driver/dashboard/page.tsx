@@ -21,21 +21,37 @@ function DriverDashboardContent() {
   const activated = searchParams.get("activated");
   const [trips, setTrips] = useState<Trip[]>([]);
   const [accepting, setAccepting] = useState<string | null>(null);
+  const [prevTripCount, setPrevTripCount] = useState(0);
+  const [newTrip, setNewTrip] = useState(false);
   const [earnings, setEarnings] = useState(0);
   const [completedTrips, setCompletedTrips] = useState(0);
+  const [isOnline, setIsOnline] = useState(false);
 
   async function fetchTrips() {
-    const res = await fetch("/api/trips");
-    const data = await res.json();
-    setTrips(data.trips || []);
-
-    if (user?.id) {
-      const driverRes = await fetch(`/api/trips/driver?driverId=${user.id}`);
-      const driverData = await driverRes.json();
-      setEarnings(driverData.earnings || 0);
-      setCompletedTrips(driverData.trips?.filter((t: any) => t.status === "completed").length || 0);
-    }
+  const res = await fetch("/api/trips");
+  const data = await res.json();
+  const incoming = data.trips || [];
+  
+  if (incoming.length > prevTripCount && prevTripCount !== 0) {
+    setNewTrip(true);
+    setTimeout(() => setNewTrip(false), 3000);
+    // Play notification sound
+    try {
+      const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFhYB8dnBqaW5weIGJjpCNiIJ8eHh8gYeNkZCMh4F8eHh9go");
+      audio.play().catch(() => {});
+    } catch {}
   }
+  
+  setPrevTripCount(incoming.length);
+  setTrips(incoming);
+
+  if (user?.id) {
+    const driverRes = await fetch(`/api/trips/driver?driverId=${user.id}`);
+    const driverData = await driverRes.json();
+    setEarnings(driverData.earnings || 0);
+    setCompletedTrips(driverData.trips?.filter((t: any) => t.status === "completed").length || 0);
+  }
+}
 
   useEffect(() => {
     fetchTrips();
@@ -53,6 +69,16 @@ function DriverDashboardContent() {
     fetchTrips();
     setAccepting(null);
   }
+
+  async function toggleOnline() {
+  const newStatus = !isOnline;
+  setIsOnline(newStatus);
+  await fetch("/api/driver/status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: user?.id, isOnline: newStatus }),
+  });
+}
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
@@ -74,6 +100,13 @@ function DriverDashboardContent() {
 
       <div style={{ maxWidth: 480, margin: "40px auto", padding: "0 20px" }}>
 
+        {newTrip && (
+  <div style={{ background: "#F5C000", borderRadius: 12, padding: 14, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <p style={{ fontSize: 14, fontWeight: 700, color: "#0a0a0a" }}>New trip request!</p>
+    <button onClick={() => setNewTrip(false)} style={{ background: "transparent", border: "none", color: "#0a0a0a", cursor: "pointer", fontSize: 18, fontFamily: "inherit" }}>×</button>
+  </div>
+)}
+
         {activated && (
           <div style={{ background: "#0a1a0a", border: "1px solid #1a3a1a", borderRadius: 16, padding: 20, marginBottom: 28, display: "flex", gap: 12, alignItems: "center" }}>
             <span style={{ fontSize: 24 }}>🤖</span>
@@ -89,6 +122,7 @@ function DriverDashboardContent() {
 
         {/* Earnings card */}
         <div style={{ background: "#111", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+
           <p style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16, fontWeight: 600 }}>Your stats</p>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
@@ -101,6 +135,20 @@ function DriverDashboardContent() {
             </div>
           </div>
         </div>
+        {/* Online/Offline toggle */}
+<div style={{ background: "#111", borderRadius: 16, padding: 20, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+  <div>
+    <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 3 }}>
+      {isOnline ? "You are online" : "You are offline"}
+    </p>
+    <p style={{ fontSize: 12, color: "#555" }}>
+      {isOnline ? "Passengers can see you and send trips" : "You won't receive any trips"}
+    </p>
+  </div>
+  <button onClick={toggleOnline} style={{ background: isOnline ? "#F5C000" : "#1a1a1a", color: isOnline ? "#0a0a0a" : "#555", border: isOnline ? "none" : "1px solid #222", padding: "10px 20px", borderRadius: 100, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s" }}>
+    {isOnline ? "Go offline" : "Go online"}
+  </button>
+</div>
 
         <div style={{ background: "#111", borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <p style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16, fontWeight: 600 }}>
